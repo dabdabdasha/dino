@@ -22,8 +22,8 @@ public class MyGdxGame extends ApplicationAdapter {
 	Sprite dino;
 	Sprite enemy;
 	Enemy[] enemies;
-	int dino_Vx = 1;
-	int dino_Vy = 1;
+	int dino_Vx = 4;
+	int dino_Vy = 4;
 	int enemy_Vx = 1;
 	int enemy_Vy = 1;
 	Label label;
@@ -34,54 +34,141 @@ public class MyGdxGame extends ApplicationAdapter {
 		dino = new Sprite(new Texture("dino.png"));
 		pie = new Sprite(new Texture("apple_pie.png"));
 		pie.setSize(100,100);
-		//enemy = new Sprite(new Texture("enemy.png"));
-		pie.setX((float) (Math.random()*Gdx.graphics.getWidth() - pie.getWidth()));
-		pie.setY((float) (Math.random()*Gdx.graphics.getHeight() - pie.getHeight()));
+		dino.setX((float) (Math.random() * Gdx.graphics.getWidth() - pie.getWidth()));
+		dino.setY((float) (Math.random() * Gdx.graphics.getHeight() - pie.getHeight()));
+		CreatePie();
 
 		BitmapFont font = new BitmapFont();
 		String text = "" + a;
 		Random r = new Random();
-		enemies = new Enemy[6];
-		for (int i=0; i<6;i++) {
-			enemies[i] = new Enemy(new Texture("enemy.png"));
-			enemies[i].enemyVX = r.nextInt(3) - 1;
-			enemies[i].enemyVY = r.nextInt(3) - 1;
-			enemies[i].setY((float) (Math.random()*Gdx.graphics.getHeight() - enemies[i].getHeight()));
-			enemies[i].setX((float) (Math.random()*Gdx.graphics.getWidth() - enemies[i].getWidth()));
-		}
+		int eNumber = 3;
+		enemies = new Enemy[eNumber];
 
+		EnemySpawn(r,eNumber);
+
+		CountLabel(font, text);
+	}
+
+	private void CreatePie() {
+		pie.setX((float) (Math.random() * Gdx.graphics.getWidth() - pie.getWidth()));
+		pie.setY((float) (Math.random() * Gdx.graphics.getHeight() - pie.getHeight()));
+	}
+
+	private void CountLabel(BitmapFont font, String text) {
 		Label.LabelStyle style = new Label.LabelStyle(font, Color.BROWN);
 		label = new Label(text,style);
 		label.setFontScale(2);
 		label.setPosition(Gdx.graphics.getWidth() - 40, Gdx.graphics.getHeight() - 40);
 	}
 
+	private void EnemySpawn(Random r,int eNumber) {
+
+		for (int i=0; i<eNumber;i++) {
+			enemies[i] = new Enemy(new Texture("enemy.png"));
+			enemies[i].enemyVX = r.nextInt(3) - 1;
+			enemies[i].enemyVY = r.nextInt(3) - 1;
+			enemies[i].setY((float) (Math.random()* Gdx.graphics.getHeight() - enemies[i].getHeight()));
+			enemies[i].setX((float) (Math.random()*Gdx.graphics.getWidth() - enemies[i].getWidth()));
+		}
+	}
+
 	@Override
 	public void render () {
 		ScreenUtils.clear(255, 255, 255, 1);
 
+		int eNumber = 3;
+
 		Rectangle r1 = pie.getBoundingRectangle();
 		Rectangle r2 = dino.getBoundingRectangle();
 
-		for (int i=0; i<6;i++) {
+		GoToFinger();
+
+		EnemyDoIfCollision(r2,eNumber);
+
+		PieDoIfCollision(r1, r2);
+
+		batch.begin();
+		label.draw(batch,1);
+
+		for (int i = 0; i < eNumber; i++) {
+			enemies[i].draw(batch);
+		}
+		pie.draw(batch);
+		dino.draw(batch);
+		batch.end();
+	}
+
+	private void PieDoIfCollision(Rectangle r1, Rectangle r2) {
+		if ((r2.overlaps(r1)) || (r2.contains(r1))){
+			dino_Vy++;
+			dino_Vx++;
+			pie.setX((float) (Math.random() * Gdx.graphics.getWidth() - pie.getWidth()));
+			pie.setY((float) (Math.random() * Gdx.graphics.getHeight() - pie.getHeight()));
+			a++;
+			label.setText(""+a);
+		}
+	}
+
+	private void GoToFinger() {
+		if (Gdx.input.isTouched()) {
+			int x1 = (int) (Gdx.input.getX() - dino.getWidth() / 2);
+			int y1 = (int) (Gdx.graphics.getHeight() - Gdx.input.getY() - dino.getHeight() / 2);
+			movingByX(x1);
+			movingByY(y1);
+		}
+	}
+
+	private void movingByY(int y1) {
+		if (dino.getY()<0){
+			dino.setY(0);
+		}
+		if (dino.getY()> Gdx.graphics.getHeight()){
+			dino.setY(Gdx.graphics.getHeight());
+		}
+		if(dino.getY() < y1){
+			dino.translateY(dino_Vy);
+		}
+		else{
+			dino.translateY(-dino_Vy);
+		}
+	}
+
+	private void movingByX(int x1) {
+		if (dino.getX()<0){
+			dino.setX(0);
+		}
+		if (dino.getX()> Gdx.graphics.getWidth() ){
+			dino.setX(Gdx.graphics.getWidth() );
+		}
+		if (dino.getX() < x1){
+			dino.translateX(dino_Vx);
+		}
+		else{
+			dino.translateX(-dino_Vx);
+		}
+	}
+
+	private void EnemyDoIfCollision(Rectangle r2,int eNumber) {
+
+		for (int i=0; i<eNumber;i++) {
 		   Rectangle r3 = enemies[i].getBoundingRectangle();
 
-			enemies[i].translateX(enemy_Vx);
-			enemies[i].translateY(enemy_Vy);
-		   if (enemies[i].getX()>Gdx.graphics.getWidth()-1) {
-			   enemy_Vx = enemy_Vx*(-1);
+			enemies[i].translateX(enemies[i].enemyVX);
+			enemies[i].translateY(enemies[i].enemyVY);
+		   if (enemies[i].getX()> Gdx.graphics.getWidth()-enemies[i].getWidth()) {
+		   	   enemies[i].enemyVX = enemies[i].enemyVX*(-1);
 		   }
 
 		   if (enemies[i].getX()<1) {
-		   	   enemy_Vx = enemy_Vx*(-1);
+			   enemies[i].enemyVX = enemies[i].enemyVX*(-1);
 		   }
 
-		   if (enemies[i].getY()>Gdx.graphics.getHeight()-1) {
-			   enemy_Vy = enemy_Vy*(-1);
+		   if (enemies[i].getY()>Gdx.graphics.getHeight()-enemies[i].getHeight()) {
+			   enemies[i].enemyVY = enemies[i].enemyVY*(-1);
 		   }
 
 		   if (enemies[i].getY()<1) {
-			   enemy_Vy = enemy_Vy*(-1);
+			   enemies[i].enemyVY = enemies[i].enemyVY*(-1);
 		   }
 
 		   if (r2.overlaps(r3)) {
@@ -95,46 +182,6 @@ public class MyGdxGame extends ApplicationAdapter {
 				dino_Vx=1;
 		   }
 		}
-
-		//Если тыкать по устройству
-		if (Gdx.input.isTouched()) {
-			int x1 = (int) (Gdx.input.getX() - dino.getWidth() / 2);
-			int y1 = (int) (Gdx.graphics.getHeight() - Gdx.input.getY() - dino.getHeight() / 2);
-			if (dino.getX() < x1){
-				dino.translateX(dino_Vx);
-			}
-			else{
-				dino.translateX(-dino_Vx);
-			}
-			if(dino.getY() < y1){
-				dino.translateY(dino_Vy);
-			}
-			else{
-				dino.translateY(-dino_Vy);
-			}
-
-		}
-
-
-
-		if ((r2.overlaps(r1)) || (r2.contains(r1))){
-			dino_Vy++;
-			dino_Vx++;
-			pie.setX((float) (Math.random() * Gdx.graphics.getWidth() - pie.getWidth()));
-			pie.setY((float) (Math.random() * Gdx.graphics.getHeight() - pie.getHeight()));
-			a++;
-			label.setText(""+a);
-		}
-
-		batch.begin();
-		label.draw(batch,1);
-
-		for (int i = 0; i < 6; i++) {
-			enemies[i].draw(batch);
-		}
-		pie.draw(batch);
-		dino.draw(batch);
-		batch.end();
 	}
 
 	@Override
